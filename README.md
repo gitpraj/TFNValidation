@@ -13,11 +13,13 @@ dotnet run .
 and alter the config.js in src/ folder accordingly. URL for the API is driven from the config.js file. Please update it accordingly.
 
 Run the API app on visual studio or dotnet console.
-Go to folder TFNValidationAPI/ 
+Go to folder TFNValidationAPI/TFNValidationAPI/
 and run 
 ```
 dotnet run .
 ```
+
+URL listening ports could be altered via the launchSettings.json file in the respective projects /Properties folder.
 After both of them are up and running, you could start playing around with it.
 
 ### Features
