@@ -37,7 +37,7 @@ namespace TFNValidationAPI.Business
                 {
                     bool isLinked = CheckForLinkedAttempt(numberStr);
                     if (isLinked)
-                        return new Response(-2, "Sorry! Looks like you are trying to guess the algorithm.");
+                        return new Response(100, "Sorry! Looks like you are trying to guess the algorithm.");
                     int ret = await Evaluate(numberStr, numberStr.Length);
                     if (ret > 0)
                         return new Response(ret, "Valid TFN");
@@ -96,12 +96,15 @@ namespace TFNValidationAPI.Business
             }
         }
 
+        /* CheckForLinkedAttempt() - Checks if there are links between tfn attempts
+         * Inputs: String numberStr - the tfn number in string
+         */
         public bool CheckForLinkedAttempt(string numberStr)
         {
             bool isTfnLinked = false;
             string prevTfn = _cache.Get("tfn")?.ToString();
             string getPrevAttemptedTFN = _cache.Get("datetime")?.ToString();
-            //int count = 0;
+
             /* dont check the first tfn validation attempt */
             if (prevTfn != null)
             {
@@ -112,10 +115,15 @@ namespace TFNValidationAPI.Business
             }
 
             _cache.Set("tfn", numberStr);
+
+            // set datetime in cache only when its the first attempt or tfns are not linked
             if (!isTfnLinked || prevTfn == null)
                 _cache.Set("datetime", DateTime.Now);
 
             int count = Convert.ToInt32(_cache.Get("linkedCount") ?? 0);
+
+            // if the linked count is >=2 check the diff between the datetime at first attempt and now. 
+            // if less than 30 seconds, the api should an appropriate message
             if (count >= 2)
             {
                 DateTime now = DateTime.Now;
@@ -133,6 +141,11 @@ namespace TFNValidationAPI.Business
             return false;
         }
 
+
+        /* TfnLinkedMethod() - Checks if there are links between the old tfn and the new tfn
+         * Inputs: String newTfn - new tfn
+         *         String prevTfn - prev tfn
+         */
         public bool TfnLinkedMethod(string newTfn, string prevTfn)
         {
             //Create a collection of all of the 4-character substrings

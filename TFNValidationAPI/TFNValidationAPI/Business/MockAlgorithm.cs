@@ -8,12 +8,12 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace TFNValidationAPI.Business
 {
+    /* This MockAlgorithm class is just a mock algorithm which does not follow the actual algorithm. Mainly for testing purposes.  */
     public class MockAlgorithm : IAlgorithm
     {
         private readonly IConfiguration _config;
         private readonly IMemoryCache _cache;
         private readonly IGlobalSettings _settings;
-
         public MockAlgorithm(IConfiguration config, IMemoryCache cache, IGlobalSettings settings)
         {
             _config = config;
@@ -30,7 +30,7 @@ namespace TFNValidationAPI.Business
             /* TFN to be of length 8 or 9 */
             try
             {
-                if (numberStr.Length > 8 || numberStr.Length < 9)
+                if (numberStr.Length == 8 || numberStr.Length == 9)
                 {
                     return new Response(0, "TFN must be of length 8 or 9");
                 }
@@ -38,7 +38,7 @@ namespace TFNValidationAPI.Business
                 {
                     bool isLinked = CheckForLinkedAttempt(numberStr);
                     if (isLinked)
-                        return new Response(-2, "Sorry! Looks like you are trying to guess the algorithm.");
+                        return new Response(100, "Sorry! Looks like you are trying to guess the algorithm.");
                     int ret = await Evaluate(numberStr, numberStr.Length);
                     if (ret > 0)
                         return new Response(ret, "Valid TFN");
@@ -98,12 +98,15 @@ namespace TFNValidationAPI.Business
             }
         }
 
+        /* CheckForLinkedAttempt() - Checks if there are links between tfn attempts
+         * Inputs: String numberStr - the tfn number in string
+         */
         public bool CheckForLinkedAttempt(string numberStr)
         {
             bool isTfnLinked = false;
             string prevTfn = _cache.Get("tfn")?.ToString();
             string getPrevAttemptedTFN = _cache.Get("datetime")?.ToString();
-            //int count = 0;
+
             /* dont check the first tfn validation attempt */
             if (prevTfn != null)
             {
@@ -114,10 +117,15 @@ namespace TFNValidationAPI.Business
             }
 
             _cache.Set("tfn", numberStr);
+
+            // set datetime in cache only when its the first attempt or tfns are not linked
             if (!isTfnLinked || prevTfn == null)
                 _cache.Set("datetime", DateTime.Now);
 
             int count = Convert.ToInt32(_cache.Get("linkedCount") ?? 0);
+
+            // if the linked count is >=2 check the diff between the datetime at first attempt and now. 
+            // if less than 30 seconds, the api should an appropriate message
             if (count >= 2)
             {
                 DateTime now = DateTime.Now;
@@ -136,6 +144,11 @@ namespace TFNValidationAPI.Business
             return false;
         }
 
+
+        /* TfnLinkedMethod() - Checks if there are links between the old tfn and the new tfn
+         * Inputs: String newTfn - new tfn
+         *         String prevTfn - prev tfn
+         */
         public bool TfnLinkedMethod(string newTfn, string prevTfn)
         {
             //Create a collection of all of the 4-character substrings
@@ -147,11 +160,6 @@ namespace TFNValidationAPI.Business
             }
 
             return substrings.Any(s => newTfn.Contains(s));
-        }
-
-        Task<Response> IAlgorithm.Validate(string number)
-        {
-            throw new NotImplementedException();
         }
     }
 }

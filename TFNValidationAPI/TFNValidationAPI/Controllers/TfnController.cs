@@ -28,14 +28,11 @@ namespace TFNValidationAPI.Controllers
             Response ret = await ut.RunAsync(id);
             if (ret.status >= 0)
             {
-                //HttpResponseMessage response = Request.CreateResponse(HttpStatusCode.OK);
-                //return new HttpResponseMessage(HttpStatusCode.InternalServerError);
                 return new JsonResult(new { message = ret.message }) { StatusCode = 200 };
             }
          else 
             {
                 return new JsonResult(new { message = ret.message }) { StatusCode = 500 };
-                //return new HttpResponseMessage(HttpStatusCode.InternalServerError);
             }
         }
     }

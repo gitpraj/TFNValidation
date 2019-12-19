@@ -16,22 +16,10 @@ namespace TFNValidationAPI
         public static void Main(string[] args)
         {
             CreateWebHostBuilder(args).Build().Run();
-            //CreateHostBuilder(args).Build().Run();
         }
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
                 .UseStartup<Startup>();
-        //public static IHostBuilder CreateHostBuilder(string[] args) =>
-        //    Host.CreateDefaultBuilder(args)
-        //    .ConfigureAppConfiguration((hostingContext, config) =>
-        //    {
-        //        config.AddJsonFile(
-        //            "json_array.json", optional: false, reloadOnChange: false);
-        //    })
-        //    .ConfigureWebHostDefaults(webBuilder =>
-        //    {
-        //        webBuilder.UseStartup<Startup>();
-        //    });
     }
 }
