@@ -75,5 +75,50 @@ namespace TFNValidationAPITests
             Response ret = await alg.Validate(tfn);
             Assert.Equal(1, ret.status);
         }
+
+        [InlineData("1234567", 7)]
+        [InlineData("1204567", 7)]
+        [InlineData("789456", 6)]
+        [InlineData("1234", 4)]
+        [Theory]
+        public async Task InvalidValuation(string tfn, int len)
+        {
+            //Response ret = await alg.Validate(tfn);
+            int ret = await alg.Evaluate(tfn, len);
+            Assert.Equal(0, ret);
+        }
+
+        [InlineData("648188480",9)]
+        [InlineData("648188499",9)]
+        [InlineData("648188519",9)]
+        [InlineData("648188527",9)]
+        [InlineData("648188535",9)]
+        [Theory]
+        public async Task ValidValuation(string tfn, int len)
+        {
+            //Response ret = await alg.Validate(tfn);
+            int ret = await alg.Evaluate(tfn, len);
+            Assert.Equal(1, ret);
+        }
+
+        [InlineData("648188535", "648188534")]
+        [InlineData("123456789", "123456781")]
+        [InlineData("54678911", "12348911")]
+        [Theory]
+        public void ValidTfnLinkedMethod(string oldtfn, string newtfn)
+        {
+            bool ret = alg.TfnLinkedMethod(newtfn, oldtfn);
+            Assert.True(ret);
+        }
+
+        [InlineData("648188535", "123456789")]
+        [InlineData("12345678", "12356902")]
+        [InlineData("34567891", "90871234")]
+        [Theory]
+        public void InvalidTfnLinkedMethod(string oldtfn, string newtfn)
+        {
+            bool ret = alg.TfnLinkedMethod(newtfn, oldtfn);
+            Assert.False(ret);
+        }
     }
 }
