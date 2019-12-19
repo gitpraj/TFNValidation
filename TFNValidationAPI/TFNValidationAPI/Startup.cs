@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -32,7 +33,12 @@ namespace TFNValidationAPI
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
-            services.AddScoped(typeof(IAlgorithm), typeof(Algorithm));
+            services.AddSingleton(typeof(IAlgorithm), typeof(Algorithm));
+            services.AddSingleton(typeof(IMemoryCache), new MemoryCache(new MemoryCacheOptions()));
+
+            //IGlobalSettings settings = GlobalSettings.Create(Configuration);
+            services.AddSingleton(typeof(IGlobalSettings), GlobalSettings.Create(Configuration));
+
             services.AddCors(options =>
             {
                 options.AddPolicy(MyAllowSpecificOrigins,

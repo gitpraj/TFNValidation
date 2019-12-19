@@ -8,12 +8,13 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace TFNValidationAPI.Business
 {
-    public class Algorithm : IAlgorithm
+    public class MockAlgorithm : IAlgorithm
     {
         private readonly IConfiguration _config;
         private readonly IMemoryCache _cache;
         private readonly IGlobalSettings _settings;
-        public Algorithm(IConfiguration config, IMemoryCache cache, IGlobalSettings settings)
+
+        public MockAlgorithm(IConfiguration config, IMemoryCache cache, IGlobalSettings settings)
         {
             _config = config;
             _cache = cache;
@@ -29,9 +30,9 @@ namespace TFNValidationAPI.Business
             /* TFN to be of length 8 or 9 */
             try
             {
-                if (numberStr.Length < 8 || numberStr.Length > 9)
+                if (numberStr.Length > 8 || numberStr.Length < 9)
                 {
-                    return new Response(0,"TFN must be of length 8 or 9");
+                    return new Response(0, "TFN must be of length 8 or 9");
                 }
                 else
                 {
@@ -45,7 +46,8 @@ namespace TFNValidationAPI.Business
                         return new Response(ret, "Invalid TFN");
                 }
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 return new Response(-1, ex?.Message);
             }
         }
@@ -60,7 +62,7 @@ namespace TFNValidationAPI.Business
             {
                 int[] eightDigitWeighFactor = _settings.EightDigitWeighFactor;
                 int[] nineDigitWeighFactor = _settings.NineDigitWeighFactor;
-                
+
                 int[] weightFactor = new int[] { };
                 if (len == 8)
                 {
@@ -125,7 +127,8 @@ namespace TFNValidationAPI.Business
                 _cache.Remove("linkedCount");
                 _cache.Remove("tfn");
 
-                if ((now - prevTime).TotalSeconds <= 30) {
+                if ((now - prevTime).TotalSeconds <= 30)
+                {
                     /* LINKED */
                     return true;
                 }
@@ -144,6 +147,11 @@ namespace TFNValidationAPI.Business
             }
 
             return substrings.Any(s => newTfn.Contains(s));
+        }
+
+        Task<Response> IAlgorithm.Validate(string number)
+        {
+            throw new NotImplementedException();
         }
     }
 }

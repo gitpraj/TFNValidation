@@ -9,8 +9,11 @@ namespace TFNValidationAPI.Interface
     public interface IAlgorithm
     {
         /// <summary>
-        /// Returns true/false depending on the validation algorithm.
+        /// Methods for validating TFN.
         /// </summary>
         Task<Response> Validate(string number);
+        Task<int> Evaluate(string numberStr, int len);
+        bool CheckForLinkedAttempt(string numberStr);
+        bool TfnLinkedMethod(string newTfn, string prevTfn);
     }
 }
