@@ -18,6 +18,8 @@ and run
 ```
 dotnet run .
 ```
+The API is:
+{url..}/api/tfn/{TFN}
 
 URL listening ports could be altered via the launchSettings.json file in the respective projects /Properties folder.
 After both of them are up and running, you could start playing around with it.
