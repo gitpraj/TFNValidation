@@ -101,44 +101,51 @@ namespace TFNValidationAPI.Business
          */
         public bool CheckForLinkedAttempt(string numberStr)
         {
-            bool isTfnLinked = false;
-            string prevTfn = _cache.Get("tfn")?.ToString();
-            string getPrevAttemptedTFN = _cache.Get("datetime")?.ToString();
-
-            /* dont check the first tfn validation attempt */
-            if (prevTfn != null)
+            try
             {
-                isTfnLinked = TfnLinkedMethod(numberStr, prevTfn);
-                int currentCountInCache = Convert.ToInt32(_cache.Get("linkedCount") ?? 0);
-                if (isTfnLinked)
-                    _cache.Set("linkedCount", currentCountInCache + 1);
-            }
+                bool isTfnLinked = false;
+                string prevTfn = _cache.Get("tfn")?.ToString();
+                string getPrevAttemptedTFN = _cache.Get("datetime")?.ToString();
 
-            _cache.Set("tfn", numberStr);
-
-            // set datetime in cache only when its the first attempt or tfns are not linked
-            if (!isTfnLinked || prevTfn == null)
-                _cache.Set("datetime", DateTime.Now);
-
-            int count = Convert.ToInt32(_cache.Get("linkedCount") ?? 0);
-
-            // if the linked count is >=2 check the diff between the datetime at first attempt and now. 
-            // if less than 30 seconds, the api should an appropriate message
-            if (count >= 2)
-            {
-                DateTime now = DateTime.Now;
-                DateTime prevTime = DateTime.Parse(getPrevAttemptedTFN);
-
-                _cache.Remove("datetime");
-                _cache.Remove("linkedCount");
-                _cache.Remove("tfn");
-
-                if ((now - prevTime).TotalSeconds <= 30) {
-                    /* LINKED */
-                    return true;
+                /* dont check the first tfn validation attempt */
+                if (prevTfn != null)
+                {
+                    isTfnLinked = TfnLinkedMethod(numberStr, prevTfn);
+                    int currentCountInCache = Convert.ToInt32(_cache.Get("linkedCount") ?? 0);
+                    if (isTfnLinked)
+                        _cache.Set("linkedCount", currentCountInCache + 1);
                 }
+
+                _cache.Set("tfn", numberStr);
+
+                // set datetime in cache only when its the first attempt or tfns are not linked
+                if (!isTfnLinked || prevTfn == null)
+                    _cache.Set("datetime", DateTime.Now);
+
+                int count = Convert.ToInt32(_cache.Get("linkedCount") ?? 0);
+
+                // if the linked count is >=2 check the diff between the datetime at first attempt and now. 
+                // if less than 30 seconds, the api should an appropriate message
+                if (count >= 2)
+                {
+                    DateTime now = DateTime.Now;
+                    DateTime prevTime = DateTime.Parse(getPrevAttemptedTFN);
+
+                    _cache.Remove("datetime");
+                    _cache.Remove("linkedCount");
+                    _cache.Remove("tfn");
+
+                    if ((now - prevTime).TotalSeconds <= 30)
+                    {
+                        /* LINKED */
+                        return true;
+                    }
+                }
+                return false;
+            } catch (Exception ex)
+            {
+                throw ex;
             }
-            return false;
         }
 
 

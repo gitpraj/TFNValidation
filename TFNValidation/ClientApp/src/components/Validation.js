@@ -25,20 +25,26 @@ export class Validation extends Component {
             message: "Loading......."
         })
 
-        var url = CONFIG.validationURL;
-        fetch(url + this.state.tfn, {
-            method: 'GET',
-        }).then((response) => response.json())
-            .then((responseJson) => {
-                console.log("success: " + JSON.stringify(responseJson))
-                if (responseJson == true) {
-                    this.setState({
-                        message: responseJson.message
-                    })
-                } else {
-                    this.setState({ message: responseJson.message })
-                }
-            })
+        let tfn = this.state.tfn;
+        tfn = tfn.replace(/\s/g, '');
+        if (tfn.length > 0) {
+            let url = CONFIG.validationURL;
+            fetch(url + tfn, {
+                method: 'GET',
+            }).then((response) => response.json())
+                .then((responseJson) => {
+                    console.log("success: " + JSON.stringify(responseJson))
+                    if (responseJson == true) {
+                        this.setState({
+                            message: responseJson.message
+                        })
+                    } else {
+                        this.setState({ message: responseJson.message })
+                    }
+                })
+        } else {
+            this.setState({ message: "Empty TFN not valid" })
+        }
     }
 
     /**
