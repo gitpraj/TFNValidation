@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Cors;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using TFNValidationAPI.Business;
 using TFNValidationAPI.Interface;
@@ -24,15 +18,14 @@ namespace TFNValidationAPI.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(string id)
         {
-            Utils ut = new Utils(_algorithm);
-            Response ret = await ut.RunAsync(id);
-            if (ret.status >= 0)
+            Response ret = await _algorithm.Validate(id);
+            if (ret.Status >= 0)
             {
-                return new JsonResult(new { message = ret.message }) { StatusCode = 200 };
+                return new JsonResult(new { message = ret.Message }) { StatusCode = 200 };
             }
-         else 
+            else 
             {
-                return new JsonResult(new { message = ret.message }) { StatusCode = 500 };
+                return new JsonResult(new { message = ret.Message }) { StatusCode = 500 };
             }
         }
     }

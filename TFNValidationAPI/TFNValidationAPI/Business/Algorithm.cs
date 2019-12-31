@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,14 +9,14 @@ namespace TFNValidationAPI.Business
 {
     public class Algorithm : IAlgorithm
     {
-        private readonly IConfiguration _config;
         private readonly IMemoryCache _cache;
         private readonly IGlobalSettings _settings;
-        public Algorithm(IConfiguration config, IMemoryCache cache, IGlobalSettings settings)
+        private readonly LinkStrategy _linkStrategy;
+        public Algorithm(IMemoryCache cache, IGlobalSettings settings)
         {
-            _config = config;
-            _cache = cache;
-            _settings = settings;
+            _cache = cache ?? throw new ArgumentNullException(nameof(cache));
+            _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+            _linkStrategy = new LinkStrategy(cache, settings);
         }
 
         /* Validate() - validate the TFN
@@ -33,20 +32,20 @@ namespace TFNValidationAPI.Business
                 {
                     return new Response(0,"TFN must be of length 8 or 9");
                 }
+                
+                bool isLinked = _linkStrategy.CheckForLinkedAttempt(numberStr);
+                if (isLinked)
+                    return new Response(100, "Sorry! Looks like you are trying to guess the algorithm.");
+                int ret = await Evaluate(numberStr, numberStr.Length);
+
+                if (ret > 0)
+                    return new Response(ret, "Valid TFN");
                 else
-                {
-                    bool isLinked = CheckForLinkedAttempt(numberStr);
-                    if (isLinked)
-                        return new Response(100, "Sorry! Looks like you are trying to guess the algorithm.");
-                    int ret = await Evaluate(numberStr, numberStr.Length);
-                    if (ret > 0)
-                        return new Response(ret, "Valid TFN");
-                    else
-                        return new Response(ret, "Invalid TFN");
-                }
+                    return new Response(ret, "Invalid TFN");
+                
             }
             catch (Exception ex) {
-                return new Response(-1, ex?.Message);
+                return new Response(-1, ex.Message);
             }
         }
 
@@ -61,7 +60,7 @@ namespace TFNValidationAPI.Business
                 int[] eightDigitWeighFactor = _settings.EightDigitWeighFactor;
                 int[] nineDigitWeighFactor = _settings.NineDigitWeighFactor;
                 
-                int[] weightFactor = new int[] { };
+                int[] weightFactor;
                 if (len == 8)
                 {
                     weightFactor = eightDigitWeighFactor;
@@ -100,21 +99,36 @@ namespace TFNValidationAPI.Business
             }
         }
 
+       
+    }
+
+    public class LinkStrategy
+    {
+        private readonly IMemoryCache _cache;
+        private readonly IGlobalSettings _settings;
+        private readonly Utils _utils;
+        public LinkStrategy(IMemoryCache cache, IGlobalSettings settings)
+        {
+            _cache = cache ?? throw new ArgumentNullException(nameof(cache));
+            _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+            _utils = new Utils();
+        }
+
         /* CheckForLinkedAttempt() - Checks if there are links between tfn attempts
-         * Inputs: String numberStr - the tfn number in string
-         */
+        * Inputs: String numberStr - the tfn number in string
+        */
         public bool CheckForLinkedAttempt(string numberStr)
         {
             try
             {
                 bool isTfnLinked = false;
                 string prevTfn = _cache.Get("tfn")?.ToString();
-                string getPrevAttemptedTFN = _cache.Get("datetime")?.ToString();
+                string getPrevAttemptedTfn = _cache.Get("datetime")?.ToString();
 
-                /* dont check the first tfn validation attempt */
+                /* do not check the first tfn validation attempt */
                 if (prevTfn != null)
                 {
-                    isTfnLinked = TfnLinkedMethod(numberStr, prevTfn);
+                    isTfnLinked = _utils.TfnLinkedMethod(numberStr, prevTfn);
                     int currentCountInCache = Convert.ToInt32(_cache.Get("linkedCount") ?? 0);
                     if (isTfnLinked)
                         _cache.Set("linkedCount", currentCountInCache + 1);
@@ -122,7 +136,7 @@ namespace TFNValidationAPI.Business
 
                 _cache.Set("tfn", numberStr);
 
-                // set datetime in cache only when its the first attempt or tfns are not linked
+                // set datetime in cache only when its the first attempt or tfn are not linked
                 if (!isTfnLinked || prevTfn == null)
                     _cache.Set("datetime", DateTime.Now);
 
@@ -133,7 +147,7 @@ namespace TFNValidationAPI.Business
                 if (count >= 2)
                 {
                     DateTime now = DateTime.Now;
-                    DateTime prevTime = DateTime.Parse(getPrevAttemptedTFN);
+                    DateTime prevTime = DateTime.Parse(getPrevAttemptedTfn);
 
                     _cache.Remove("datetime");
                     _cache.Remove("linkedCount");
@@ -146,12 +160,20 @@ namespace TFNValidationAPI.Business
                     }
                 }
                 return false;
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 throw ex;
             }
         }
+    }
 
+    public class Utils
+    {
+        public Utils()
+        {
+
+        }
 
         /* TfnLinkedMethod() - Checks if there are links between the old tfn and the new tfn
          * Inputs: String newTfn - new tfn
@@ -167,7 +189,7 @@ namespace TFNValidationAPI.Business
                 substrings.Add(prevTfn.Substring(i, 4));
             }
 
-            return substrings.Any(s => newTfn.Contains(s));
+            return substrings.Any(newTfn.Contains);
         }
     }
 }

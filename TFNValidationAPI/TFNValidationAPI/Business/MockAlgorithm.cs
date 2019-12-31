@@ -11,14 +11,12 @@ namespace TFNValidationAPI.Business
     /* This MockAlgorithm class is just a mock algorithm which does not follow the actual algorithm. Mainly for testing purposes.  */
     public class MockAlgorithm : IAlgorithm
     {
-        private readonly IConfiguration _config;
         private readonly IMemoryCache _cache;
         private readonly IGlobalSettings _settings;
-        public MockAlgorithm(IConfiguration config, IMemoryCache cache, IGlobalSettings settings)
+        public MockAlgorithm(IMemoryCache cache, IGlobalSettings settings)
         {
-            _config = config;
-            _cache = cache;
-            _settings = settings;
+            _cache = cache ?? throw new ArgumentNullException(nameof(cache));
+            _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         }
 
         /* Validate() - validate the TFN
@@ -48,7 +46,7 @@ namespace TFNValidationAPI.Business
             }
             catch (Exception ex)
             {
-                return new Response(-1, ex?.Message);
+                return new Response(-1, ex.Message);
             }
         }
 
@@ -105,9 +103,9 @@ namespace TFNValidationAPI.Business
         {
             bool isTfnLinked = false;
             string prevTfn = _cache.Get("tfn")?.ToString();
-            string getPrevAttemptedTFN = _cache.Get("datetime")?.ToString();
+            string getPrevAttemptedTfn = _cache.Get("datetime")?.ToString();
 
-            /* dont check the first tfn validation attempt */
+            /* do not check the first tfn validation attempt */
             if (prevTfn != null)
             {
                 isTfnLinked = TfnLinkedMethod(numberStr, prevTfn);
@@ -118,7 +116,7 @@ namespace TFNValidationAPI.Business
 
             _cache.Set("tfn", numberStr);
 
-            // set datetime in cache only when its the first attempt or tfns are not linked
+            // set datetime in cache only when its the first attempt or tfn are not linked
             if (!isTfnLinked || prevTfn == null)
                 _cache.Set("datetime", DateTime.Now);
 
@@ -129,7 +127,7 @@ namespace TFNValidationAPI.Business
             if (count >= 2)
             {
                 DateTime now = DateTime.Now;
-                DateTime prevTime = DateTime.Parse(getPrevAttemptedTFN);
+                DateTime prevTime = DateTime.Parse(getPrevAttemptedTfn);
 
                 _cache.Remove("datetime");
                 _cache.Remove("linkedCount");
@@ -159,7 +157,7 @@ namespace TFNValidationAPI.Business
                 substrings.Add(prevTfn.Substring(i, 4));
             }
 
-            return substrings.Any(s => newTfn.Contains(s));
+            return substrings.Any(newTfn.Contains);
         }
     }
 }

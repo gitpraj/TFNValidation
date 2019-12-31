@@ -24,7 +24,7 @@ namespace TFNValidationAPITests
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .Build();
             settings = GlobalSettings.Create(configuration);
-            alg = new MockAlgorithm(configuration, cache, settings);
+            alg = new MockAlgorithm(cache, settings);
         }
 
         [InlineData("abc")]
@@ -35,7 +35,7 @@ namespace TFNValidationAPITests
         public async Task InvalidCharTFNs(string tfn)
         {
             Response ret = await alg.Validate(tfn);
-            Assert.Equal(0, ret.status);
+            Assert.Equal(0, ret.Status);
         }
 
         [InlineData("1234567")]
@@ -46,7 +46,7 @@ namespace TFNValidationAPITests
         public async Task InvalidNumberTFNs(string tfn)
         {
             Response ret = await alg.Validate(tfn);
-            Assert.Equal(0, ret.status);
+            Assert.Equal(0, ret.Status);
         }
 
         [InlineData("648188480")]
@@ -73,7 +73,7 @@ namespace TFNValidationAPITests
         public async Task ValidTFNs(string tfn)
         {
             Response ret = await alg.Validate(tfn);
-            Assert.Equal(1, ret.status);
+            Assert.Equal(1, ret.Status);
         }
     }
 }

@@ -14,6 +14,7 @@ namespace TFNValidationAPITests
         private IConfiguration configuration;
         private IGlobalSettings settings;
         private IAlgorithm alg;
+        private Utils utils;
 
         public TFNValidationTests()
         {
@@ -24,7 +25,8 @@ namespace TFNValidationAPITests
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .Build();
             settings =  GlobalSettings.Create(configuration);
-            alg = new Algorithm(configuration, cache, settings);
+            utils = new Utils();
+            alg = new Algorithm(cache, settings);
         }
 
         [InlineData("abc")]
@@ -32,10 +34,10 @@ namespace TFNValidationAPITests
         [InlineData("praj")]
         [InlineData("lop")]
         [Theory]
-        public async Task InvalidCharTFNs(string tfn)
+        public async Task InvalidCharTfns(string tfn)
         {
             Response ret = await alg.Validate(tfn);
-            Assert.Equal(0, ret.status);
+            Assert.Equal(0, ret.Status);
         }
 
         [InlineData("1234567")]
@@ -43,10 +45,10 @@ namespace TFNValidationAPITests
         [InlineData("789456")]
         [InlineData("1234")]
         [Theory]
-        public async Task InvalidNumberTFNs(string tfn)
+        public async Task InvalidNumberTfns(string tfn)
         {
             Response ret = await alg.Validate(tfn);
-            Assert.Equal(0, ret.status);
+            Assert.Equal(0, ret.Status);
         }
 
         [InlineData("648188480")]
@@ -70,10 +72,10 @@ namespace TFNValidationAPITests
         [InlineData("85655755")]
         [InlineData("85655805")]
         [Theory]
-        public async Task ValidTFNs(string tfn)
+        public async Task ValidTfns(string tfn)
         {
             Response ret = await alg.Validate(tfn);
-            Assert.Equal(1, ret.status);
+            Assert.Equal(1, ret.Status);
         }
 
         [InlineData("1234567", 7)]
@@ -105,9 +107,9 @@ namespace TFNValidationAPITests
         [InlineData("123456789", "123456781")]
         [InlineData("54678911", "12348911")]
         [Theory]
-        public void ValidTfnLinkedMethod(string oldtfn, string newtfn)
+        public void ValidTfnLinkedMethod(string oldTfn, string newTfn)
         {
-            bool ret = alg.TfnLinkedMethod(newtfn, oldtfn);
+            bool ret = utils.TfnLinkedMethod(newTfn, oldTfn);
             Assert.True(ret);
         }
 
@@ -115,9 +117,9 @@ namespace TFNValidationAPITests
         [InlineData("12345678", "12356902")]
         [InlineData("34567891", "90871234")]
         [Theory]
-        public void InvalidTfnLinkedMethod(string oldtfn, string newtfn)
+        public void InvalidTfnLinkedMethod(string oldTfn, string newTfn)
         {
-            bool ret = alg.TfnLinkedMethod(newtfn, oldtfn);
+            bool ret = utils.TfnLinkedMethod(newTfn, oldTfn);
             Assert.False(ret);
         }
     }

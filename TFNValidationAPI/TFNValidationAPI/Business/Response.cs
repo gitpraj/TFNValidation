@@ -1,19 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
+﻿
 namespace TFNValidationAPI.Business
 {
     public class Response
     {
-        public int status;
-        public string message;
+        public int Status;
+        public string Message;
 
         public Response(int status, string message)
         {
-            this.status = status;
-            this.message = message;
+            this.Status = status;
+            this.Message = message;
         }
     }
 }
